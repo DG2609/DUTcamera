@@ -8,6 +8,7 @@ from PIL import ImageTk, Image
 import math 
 from datetime import datetime
 import time 
+
 root = tk.Tk()
 root.geometry("1000x900")
 root['background']='#CCFFFF'
@@ -199,70 +200,79 @@ def get_final_prediction(predictions):
     
     
 def main():
-	# frame parent {
-	frame = tk.Frame(root, bg='#CCFFFF')
-	frame.pack(side='top', fill=None, expand = False)
+    # Create parent frame
+    parent_frame = tk.Frame(root, bg='#CCFFFF')
+    parent_frame.pack(side='top', fill=None, expand=False)
 
-	#image
-	image = Image.open("DUT.jpg")
-	resize_img = resize_image(image, 110, 100)
-	tk_img = ImageTk.PhotoImage(resize_img)
-	image_label = Label(frame, image=tk_img)
-	#image_label.grid(row = 1, column = 0)
-	image_label.pack()
+    # Add image to parent frame
+    image = Image.open("DUT.jpg")
+    resized_img = resize_image(image, 110, 100)
+    tk_img = ImageTk.PhotoImage(resized_img)
+    image_label = Label(parent_frame, image=tk_img)
+    image_label.pack()
 
+    # Add "Smart Building" label to parent frame
+    sb_label = tk.Label(parent_frame, text="Smart Building", font=("Lato-Black", 30, 'italic'), fg='blue', bg='#CCFFFF')
+    sb_label.pack(pady=50)
 
-	sb_label = tk.Label(frame, text = "Smart Building", font=("Lato-Black", 30, 'italic'), fg = 'blue', bg='#CCFFFF')
-	sb_label.pack(pady=50)
+    # Create child frame
+    child_frame = Frame(parent_frame, bg='#CCFFFF')
+    child_frame.pack(pady=50)
 
-	# child frame
-	frame2 = Frame(frame, bg='#CCFFFF')
-	frame2.pack(pady=50)
+    # Add "WELCOME" label to child frame
+    wc_label = tk.Label(child_frame, text="WELCOME", bg='blue', fg='yellow', font=('Lato-Black', 24), padx=200)
+    wc_label.pack()
 
-	wc_label = tk.Label(frame2, text="WELCOME", bg='blue', fg='yellow', font=('Lato-Black', 24), padx=200)
-	wc_label.pack()
+    # Add "saaaaaa" label to child frame
+    lb3 = tk.Label(child_frame, text="saaaaaa", bg='orange', fg='yellow', font=('Lato-Black', 24), padx=80)
+    lb3.pack()
 
-	lb3 = tk.Label(frame2, text="saaaaaa", bg='orange', fg='yellow', font=('Lato-Black', 24), padx=80)
-	lb3.pack()
+    # Add "DUT" label to child frame
+    dut_label = tk.Label(child_frame, text="DUT", bg='red', fg='yellow', font=('Lato-Black', 24), padx=60)
+    dut_label.pack()
 
-	dut_label = tk.Label(frame2, text="DUT", bg = 'red', fg='yellow', font=('Lato-Black', 24), padx=60)
-	dut_label.pack()
-#}
+    # Initialize camera and variables
+    cam = cam_init()
+    prediction = None
+    name_list = []
 
-	cam = cam_init()
-	count=0
-	prediction = None
-	name_list = []	
-	while(1):
-		faces, frame, ret = get_faces(cam)
-		predictions=[]
-		for face in faces:
-			# Lay bbox
-			x,y,w,h = face['bbox']
-# Ve bbox
-            # Lay embedded vector tuong ung voi khuong mat
-			embedded_vector=face['vec']
-			prediction = get_single_faiss_prediction(embedded_vector)
-			predictions.append(prediction)
-            #prediction = get_final_prediction(get_single_faiss_prediction(embedded_vector))
-            
-            # Ve prediction
-			font = cv2.FONT_HERSHEY_SIMPLEX
-			fontScale = 1  
-			color = (0, 0, 0)
-			thickness = 2
-			frame = cv2.putText(frame, f'{prediction}', (w,h) , font, fontScale, color, thickness, cv2.LINE_AA)
-		if not ret:
-			pass
-		final_predictions = get_final_prediction(predictions)
-		print(final_predictions)
-		return name_list==final_predictions 
-		lb3.config(name_list)
-		'''root.mainloop()'''
-		if cv2.waitKey(1) & 0xFF == ord('q'):
-			break
-	cv2.destroyAllWindows()
+    # Loop to detect faces and make predictions
+    while True:
+        faces, frame, ret = get_faces(cam)
+        predictions = []
+        for face in faces:
+            # Get bounding box coordinates
+            x, y, w, h = face['bbox']
 
+            # Get embedded vector for the face
+            embedded_vector = face['vec']
 
+            # Make a prediction for the face
+            prediction = get_single_faiss_prediction(embedded_vector)
+            predictions.append(prediction)
+
+            # Add prediction label to the frame
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1
+            color = (0, 0, 0)
+            thickness = 2
+            frame = cv2.putText(frame, f'{prediction}', (w, h), font, font_scale, color, thickness, cv2.LINE_AA)
+
+        if not ret:
+            pass
+
+        # Get final predictions and update name list
+        final_predictions = get_final_prediction(predictions)
+        print(final_predictions)
+        name_list = final_predictions
+        lb3.config(text=name_list)
+
+        # Check for 'q' key press to exit the loop
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Destroy OpenCV windows
+    cv2.destroyAllWindows()
+    
 if __name__=='__main__':
     main()
